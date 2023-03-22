@@ -27,5 +27,4 @@ df_train, df_test = m.split_df(df=df, freq="D", valid_p=0.2)
 metrics_train = m.fit(df=df_train, freq="D")
 metrics_test = m.test(df=df_test)
 
-print(metrics_train)
 print(metrics_test)
