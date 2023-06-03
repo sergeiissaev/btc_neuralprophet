@@ -1,3 +1,6 @@
 yfinance
 matplotlib
 neuralprophet
+nbformat
+scikit-learn
+tqdm

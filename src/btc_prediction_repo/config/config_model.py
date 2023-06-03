@@ -1,0 +1,3 @@
+
+# metric=Metrics(mae_train=0.29697027739120685, mae_val=3.1333865335254387)
+NP_ARGS={'seasonality_mode': 'multiplicative', 'growth': 'discontinuous', 'n_changepoints': 9988, 'changepoints_range': 0.31200529515601305, 'trend_reg': 0.12441291149095546, 'trend_reg_threshold': False, 'yearly_seasonality': True, 'weekly_seasonality': False, 'seasonality_reg': 50, 'n_lags': 35, 'n_forecasts': 30, 'ar_reg': 0.0, 'num_hidden_layers': 0}

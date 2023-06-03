@@ -120,3 +120,5 @@ metrics_trt/
 /data
 
 .idea
+/src/btc_prediction_repo/app/lightning_logs/
+/lightning_logs/
