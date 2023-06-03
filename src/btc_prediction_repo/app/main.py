@@ -1,25 +1,22 @@
+# -*- coding: utf-8 -*-
 import logging
 from pathlib import Path
 from statistics import mean
 from typing import List
 
-
-
-import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from neuralprophet import NeuralProphet, set_random_seed
 from sklearn.metrics import mean_absolute_error
+from tqdm import tqdm
 
 from btc_prediction_repo.app.dataclasses_file import Metrics
 from btc_prediction_repo.app.forecaster_abc import Forecaster
-from btc_prediction_repo.app.utils import multi_type_rand, get_np_args
-from neuralprophet import NeuralProphet, set_random_seed
-from tqdm import tqdm
+from btc_prediction_repo.app.utils import get_np_args
 
 set_random_seed(42)
 
 logger = logging.getLogger(__name__)
-
 
 
 class NeuralProphetForecast(Forecaster):
@@ -54,7 +51,7 @@ class NeuralProphetForecast(Forecaster):
         return self.model.split_df(self.df, freq=frequency, valid_p=validation_fraction)
 
     def fit_model(self, df_train: pd.DataFrame = None, df_test: pd.DataFrame = None, plot: bool = False) -> None:
-        ''' Fit model with df_train and df_test, or just the entire self.df, adding any lagged regressors if any '''
+        """Fit model with df_train and df_test, or just the entire self.df, adding any lagged regressors if any"""
         set_random_seed(42)
         if df_train is None:
             df_train = self.df
@@ -82,7 +79,7 @@ class NeuralProphetForecast(Forecaster):
 
     def graph_fit_on_test(self, df_test: pd.DataFrame):
         forecast = self.model.predict(df_test)
-        model = self.model.highlight_nth_step_ahead_of_each_forecast(1)
+        self.model.highlight_nth_step_ahead_of_each_forecast(1)
         fig = self.model.plot(forecast[-7 * 24 :])
         fig.show()
 
@@ -116,7 +113,7 @@ class NeuralProphetForecast(Forecaster):
         try:
             preds = self.model.predict(df)
         except Exception as e:
-            logger.error(f"Failed!  {yhat_steps=} {df=}")
+            logger.error(f"Failed!  {yhat_steps=} {df=} {e=}")
 
             return -1
         preds = preds[preds[yhat].notna()]
@@ -127,14 +124,15 @@ class NeuralProphetForecast(Forecaster):
         fig = self.model.plot(data)
         fig.show()
 
-
     def create_split_dfs(self, k: int) -> List[pd.DataFrame]:
         if self.model is None:
             raise ValueError("Must run instantiate_np() method prior to splitting dfs")
         return self.model.crossvalidation_split_df(self.df, k=k)
 
-    def get_cv_mae(self, yhat_lookahead_for_metrics: int, folds: int, np_retries: int = 5, plot: bool = False) -> Metrics:
-        ''' Run a cross validation for folds folds to get a metric (train and test) of how well these hyperparameters work '''
+    def get_cv_mae(
+        self, yhat_lookahead_for_metrics: int, folds: int, np_retries: int = 5, plot: bool = False
+    ) -> Metrics:
+        """Run a cross validation for folds folds to get a metric (train and test) of how well these hyperparameters work"""
         self.instantiate_np(retries=np_retries)
         folds = self.create_split_dfs(k=folds)
         metrics_train = []
@@ -163,10 +161,6 @@ class NeuralProphetForecast(Forecaster):
 
     def create_np_args(self) -> None:
         self.np_args = get_np_args(ar=self.ar)
-
-
-
-
 
     def plot_data(self, title: str = "Data"):
         plt.plot(self.df["ds"], self.df["y"])
