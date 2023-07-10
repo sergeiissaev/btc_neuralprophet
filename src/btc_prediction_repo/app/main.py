@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
+import pickle
 from pathlib import Path
 from statistics import mean
 from typing import List
 
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from neuralprophet import NeuralProphet, set_random_seed
@@ -16,6 +18,10 @@ from btc_prediction_repo.app.utils import get_np_args
 
 set_random_seed(42)
 
+logging.getLogger("NP.forecaster").setLevel(logging.WARNING)
+logging.getLogger("NP.config").setLevel(logging.ERROR)
+logging.getLogger("NP.df_utils").setLevel(logging.WARNING)
+logging.getLogger("NP.utils").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
@@ -92,20 +98,25 @@ class NeuralProphetForecast(Forecaster):
     ) -> pd.DataFrame:
         """Create a dataframe and optional plot containing predictions backwards n_historic_predictions and forwards periods rows"""
         if df is None:
-            future = self.model.make_future_dataframe(
-                self.df, periods=periods, n_historic_predictions=n_historic_predictions
-            )
-        else:
-            future = self.model.make_future_dataframe(
-                df, periods=periods, n_historic_predictions=n_historic_predictions
-            )
+            df = self.df
+        future = self.model.make_future_dataframe(df, periods=periods, n_historic_predictions=n_historic_predictions)
         data = self.model.predict(future)
         data["yhat1"] = data["yhat1"].clip(lower=0)
+        if n_historic_predictions:
+            data["yhat_future"] = data["yhat1"]
+            data.loc[data["y"].notnull(), "yhat_future"] = np.nan
         if plot_filename_stem is not None:
             fig = self.model.plot(data)
             fig.savefig(Path("data", "interim", f"{plot_filename_stem}.png"))
             fig.show()
         return data
+
+    def save_model(self, save_path: Path) -> None:
+        """Save model as pkl"""
+        if self.model is None:
+            raise ValueError("Model not fit")
+        with open(save_path, "wb") as f:
+            pickle.dump(self.model, f)
 
     def get_mae(self, df: pd.DataFrame, yhat_steps: int) -> float:
         """Have the AI predict on a df and get mae compared to the ground truths"""
@@ -114,7 +125,6 @@ class NeuralProphetForecast(Forecaster):
             preds = self.model.predict(df)
         except Exception as e:
             logger.error(f"Failed!  {yhat_steps=} {df=} {e=}")
-
             return -1
         preds = preds[preds[yhat].notna()]
         preds[yhat] = preds[yhat].clip(lower=0)

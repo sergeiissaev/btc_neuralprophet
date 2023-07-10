@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 
 from btc_prediction_repo.app.main import NeuralProphetForecast
