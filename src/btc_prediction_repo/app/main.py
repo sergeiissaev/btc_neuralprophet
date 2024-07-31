@@ -106,9 +106,13 @@ class NeuralProphetForecast(Forecaster):
             data["yhat_future"] = data["yhat1"]
             data.loc[data["y"].notnull(), "yhat_future"] = np.nan
         if plot_filename_stem is not None:
-            fig = self.model.plot(data)
-            fig.savefig(Path("data", "interim", f"{plot_filename_stem}.png"))
-            fig.show()
+            plt.plot(data.y, label="y")
+            plt.plot(data.yhat1, label="yhat1")
+            plt.plot(data.yhat2, label="yhat2")
+            plt.plot(data.yhat3, label="yhat3")
+            plt.legend(loc="upper left")
+            plt.savefig(Path("data", "interim", f"{plot_filename_stem}.png"))
+            plt.show()
         return data
 
     def save_model(self, save_path: Path) -> None:
@@ -123,8 +127,7 @@ class NeuralProphetForecast(Forecaster):
         yhat = f"yhat{yhat_steps}"
         try:
             preds = self.model.predict(df)
-        except Exception as e:
-            logger.error(f"Failed!  {yhat_steps=} {df=} {e=}")
+        except Exception:
             return -1
         preds = preds[preds[yhat].notna()]
         preds[yhat] = preds[yhat].clip(lower=0)
